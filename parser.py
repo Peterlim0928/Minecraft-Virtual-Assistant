@@ -85,7 +85,7 @@ class MinecraftWikiParser:
                 # Table (simple extraction)
                 table_data = []
                 for row in element.find_all('tr'):
-                    cols = [col.get_text() for col in row.find_all(['td', 'th'])]
+                    cols = [self._get_best_label(col) for col in row.find_all(['td', 'th'])]
                     if cols:
                         table_data.append(cols)
                 if table_data:
@@ -101,7 +101,7 @@ class MinecraftWikiParser:
                     header = row.find('th')
                     value = row.find('td')
                     if header and value:
-                        infobox_data[header.get_text()] = value.get_text()
+                        infobox_data[header.get_text()] = self._get_best_label(value)
                 if infobox_data:
                     content.append({
                         "type": "infobox",
@@ -114,7 +114,7 @@ class MinecraftWikiParser:
                 for table in element.find_all('table'):
                     table_data = []
                     for row in table.find_all('tr'):
-                        cols = [col.get_text() for col in row.find_all(['td', 'th'])]
+                        cols = [self._get_best_label(col) for col in row.find_all(['td', 'th'])]
                         if cols:
                             table_data.append(cols)
                     if table_data:
@@ -125,8 +125,79 @@ class MinecraftWikiParser:
                         "section": " > ".join(section_hierarchy),
                         "data": drop_tables
                     })
+            elif element.name == 'div' and 'calculator-container' in element.get('class', []):
+                # Calculator widget (interactive table for block breaking, etc.)
+                table = element.find('table')
+                if table:
+                    table_data = []
+                    for row in table.find_all('tr'):
+                        cols = [self._get_best_label(col) for col in row.find_all(['td', 'th'])]
+                        if cols:
+                            table_data.append(cols)
+                    
+                    # Extract parameter information from interactive controls
+                    parameters = {}
+
+                    # Extract slider parameters
+                    for slider in element.find_all('span', {'class': 'calculator-field', 'data-calculator-type': 'range'}):
+                        slider_id = slider.get('id')
+                        label_span = element.find('span', {'class': 'calculator-field-label', 'data-for': slider_id})
+                        label = label_span.get_text(strip=True) if label_span else slider_id
+                        min_val = slider.get('data-calculator-min', '0')
+                        max_val = slider.get('data-calculator-max', '0')
+                        datalist = slider.get('data-calculator-datalist', '').split(';')
+                        parameters[label] = {
+                            'type': 'slider',
+                            'min': min_val,
+                            'max': max_val,
+                            'options': datalist
+                        }
+                    
+                    # Extract radio button groups
+                    for radiogroup in element.find_all('div', {'role': 'radiogroup'}):
+                        group_label = radiogroup.get('aria-label', 'unknown')
+                        options = []
+                        for radio_field in radiogroup.find_all('span', {'class': 'calculator-field', 'data-calculator-type': 'radio'}):
+                            radio_id = radio_field.get('id')
+                            label_span = radiogroup.find('span', {'class': 'calculator-field-label', 'data-for': radio_id})
+                            label = label_span.get_text(strip=True) if label_span else radio_id
+                            options.append(label)
+                        parameters[group_label] = {
+                            'type': 'radio',
+                            'options': options
+                        }
+                    
+                    # NOTE: Can extend this to extract other interactive elements:
+                    # - Checkboxes: element.find_all('input', {'type': 'checkbox'})
+                    # - Dropdowns: element.find_all('select')
+                    # For each, extract the available options and default values
+                    
+                    if table_data:
+                        content.append({
+                            "type": "calculator_table",
+                            "section": " > ".join(section_hierarchy),
+                            "data": table_data,
+                            "parameters": parameters,
+                            "legend_type": "breaking_table"
+                        })
         
         self.content = content
+
+    def _get_best_label(self, element):
+        """
+        Try to get the best label for an element.
+        Priority: text > <a> title > <img> alt
+        """
+        text = element.get_text()
+        if text.strip():
+            return text
+        a_tag = element.find('a')
+        if a_tag and a_tag.get('title'):
+            return a_tag['title']
+        img_tag = element.find('img')
+        if img_tag and img_tag.get('alt'):
+            return img_tag['alt']
+        return ""
 
     def to_json(self):
         """Convert the extracted content to JSON format."""
@@ -150,5 +221,5 @@ class MinecraftWikiParser:
 
 if __name__ == "__main__":
     # Example usage
-    parser = MinecraftWikiParser("https://minecraft.wiki/w/Iron_Golem")
+    parser = MinecraftWikiParser("https://minecraft.wiki/w/Cobblestone")
     parser.save_to_file("json")

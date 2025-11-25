@@ -95,5 +95,5 @@ def fetch_page(url):
     return r.text
 
 if __name__ == "__main__":
-    url = 'https://minecraft.wiki/w/Iron_Golem'
+    url = 'https://minecraft.wiki/w/Cobblestone'
     html = fetch_page(url)

@@ -1,0 +1,123 @@
+<tr class="calculatorgadget-enabled" style="display: none">
+  <th>
+    <span
+      class="calculator-field-label"
+      data-for="calculator-field-efficiencyLevel"
+    >
+      <a href="/w/Efficiency" title="Efficiency"> Efficiency </a>
+    </span>
+  </th>
+  <td colspan="2">
+    <div style="display: flex; gap: 3px">
+      <span
+        class="calculator-field"
+        data-calculator-formula="efficiencyLevel"
+        data-calculator-type="plain"
+        style="font-variant-numeric: tabular-nums; width: 1ch"
+      >
+        0
+      </span>
+      <span
+        class="calculator-field"
+        data-calculator-datalist="0;1;2;3;4;5"
+        data-calculator-max="5"
+        data-calculator-min="0"
+        data-calculator-step="1"
+        data-calculator-type="range"
+        id="calculator-field-efficiencyLevel"
+        style="width: 85px"
+      >
+        0
+      </span>
+      <span
+        class="calculator-field"
+        data-calculator-formula="ifzero(efficiencyLevel, 0, 1 +efficiencyLevel *efficiencyLevel)"
+        data-calculator-type="hidden"
+        id="calculator-field-efficiencySpeed"
+        style="display: none"
+      >
+        0
+      </span>
+    </div>
+  </td>
+</tr>
+
+<tr class="calculatorgadget-enabled" style="display: none">
+  <th>
+    <span class="calculator-field-label" data-for="calculator-field-hasteLevel">
+      <a href="/w/Haste" title="Haste"> Haste </a>
+    </span>
+  </th>
+  <td class="calculatorgadget-enabled" colspan="2" style="display: none">
+    <div style="display: flex; gap: 3px">
+      <span
+        class="calculator-field"
+        data-calculator-formula="hasteLevel"
+        data-calculator-type="plain"
+        style="font-variant-numeric: tabular-nums; width: 1ch"
+      >
+        0
+      </span>
+      <span
+        class="calculator-field"
+        data-calculator-datalist="0;1;2"
+        data-calculator-max="2"
+        data-calculator-min="0"
+        data-calculator-step="1"
+        data-calculator-type="range"
+        id="calculator-field-hasteLevel"
+        style="width: 50px"
+      >
+        0
+      </span>
+      <span
+        class="calculator-field"
+        data-calculator-formula="1 +0.2*hasteLevel*ifzero(hasteBE, 1, pow(1.2, hasteLevel))"
+        data-calculator-type="hidden"
+        id="calculator-field-hasteMultiplier"
+        style="display: none"
+      >
+        1
+      </span>
+      <div
+        aria-label="Haste Edition"
+        id="hasteEdition"
+        role="radiogroup"
+        style="
+          display: flex;
+          gap: inherit;
+          filter: grayscale(calc(1 - min(1, var(--calculator-hasteLevel))))
+            opacity(calc(0.5 + 0.5 * min(1, var(--calculator-hasteLevel))));
+        "
+      >
+        <span
+          class="calculator-field"
+          data-calculator-name="hasteEdition"
+          data-calculator-type="radio"
+          id="calculator-field-hasteJE"
+        >
+          1
+        </span>
+        <span
+          class="calculator-field-label"
+          data-for="calculator-field-hasteJE"
+        >
+          JE
+        </span>
+        <span
+          class="calculator-field"
+          data-calculator-name="hasteEdition"
+          data-calculator-type="radio"
+          id="calculator-field-hasteBE"
+        >
+        </span>
+        <span
+          class="calculator-field-label"
+          data-for="calculator-field-hasteBE"
+        >
+          BE
+        </span>
+      </div>
+    </div>
+  </td>
+</tr>

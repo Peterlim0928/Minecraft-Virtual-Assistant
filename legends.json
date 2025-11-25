@@ -1,0 +1,11 @@
+{
+  "breaking_table": {
+    "description": "Legend for block breaking calculator tables.",
+    "legend": [
+      "Red background: incorrect tool, drops nothing",
+      "Yellow background: correct tool, drops nothing or something other than the block itself",
+      "Green background: correct tool, drops the block itself",
+      "Italicized: can be instant mined"
+    ]
+  }
+}
