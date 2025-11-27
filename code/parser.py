@@ -4,6 +4,7 @@ import requests
 from bs4 import BeautifulSoup
 import logging
 import json
+from typing import TypedDict, Literal, Union
 
 # Configure logging
 logging.basicConfig(
@@ -15,6 +16,75 @@ logging.basicConfig(
 
 HEADERS = {"User-Agent": "FriendlyResearchBot/1.0 (contact: limjiantao@gmail.com)"}
 
+# region Types
+
+
+# --- Block Types ---
+class ParagraphBlock(TypedDict):
+    type: Literal["paragraph"]
+    section: str
+    text: str
+
+
+class ListBlock(TypedDict):
+    type: Literal["list"]
+    section: str
+    items: list[str]
+
+
+class TableBlock(TypedDict):
+    type: Literal["table"]
+    section: str
+    data: list[list[str]]
+
+
+class InfoboxBlock(TypedDict):
+    type: Literal["infobox"]
+    section: str
+    data: dict[str, str]
+
+
+class DropTableBlock(TypedDict):
+    type: Literal["droptable"]
+    section: str
+    data: list[list[list[str]]]  # tables → rows → columns
+
+
+class CalculatorParameter(TypedDict):
+    type: Literal["slider", "radio"]
+    min: str | None
+    max: str | None
+    options: list[str]
+
+
+class CalculatorTableBlock(TypedDict):
+    type: Literal["calculator_table"]
+    section: str
+    data: list[list[list[str]]]
+    parameters: dict[str, CalculatorParameter]
+    legend_type: str
+
+
+# --- Union of all blocks ---
+ContentBlock = Union[
+    ParagraphBlock,
+    ListBlock,
+    TableBlock,
+    InfoboxBlock,
+    DropTableBlock,
+    CalculatorTableBlock,
+]
+
+
+# --- Main page type ---
+class ContentItem(TypedDict):
+    title: str
+    url: str
+    content: list[ContentBlock]
+
+
+# endregion
+
 
 class MinecraftWikiParser:
     """Parser for extracting structured content from Minecraft Wiki pages."""
@@ -22,7 +92,7 @@ class MinecraftWikiParser:
     def __init__(self, url):
         self.url: str = url
         self.title: str = None
-        self.content: list = None
+        self.content: ContentItem = None
         self.parse()  # Automatically parse on initialization
 
     def parse(self):
@@ -64,7 +134,7 @@ class MinecraftWikiParser:
                     section_hierarchy = section_hierarchy[:2] + [header_text]
             elif element.name == "p":
                 # Paragraph
-                paragraph_text = element.get_text()
+                paragraph_text = element.get_text().strip()
                 if paragraph_text:
                     content.append(
                         {
@@ -250,8 +320,18 @@ class MinecraftWikiParser:
         logging.info(f"Saved content to {filename}")
         return filename
 
+    def load_from_file(filepath):
+        """Load a MinecraftWikiParser instance from a JSON file."""
+        with open(filepath, "r", encoding="utf-8") as f:
+            data = json.load(f)
+
+        parser = MinecraftWikiParser(data["url"])
+        parser.title = data["title"]
+        parser.content = data["content"]
+        return parser
+
 
 if __name__ == "__main__":
     # Example usage
-    parser = MinecraftWikiParser("https://minecraft.wiki/w/Iron_Golem")
+    parser = MinecraftWikiParser("https://minecraft.wiki/w/Cobblestone")
     parser.save_to_file("json")

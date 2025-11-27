@@ -21,7 +21,7 @@ HEADERS = {"User-Agent": "FriendlyResearchBot/1.0 (contact: limjiantao@gmail.com
 CRAWL_DELAY = 1  # seconds
 
 
-def fetch_sitemap_index(url):
+def fetch_sitemap_index(url) -> list[ET.Element]:
     """Fetch and parse the sitemap index XML."""
     logging.info(f"Fetching sitemap index from {url}")
     response = requests.get(url, headers=HEADERS)
@@ -30,7 +30,7 @@ def fetch_sitemap_index(url):
     return soup.find_all("loc")
 
 
-def fetch_sitemap(url):
+def fetch_sitemap(url) -> ET.Element:
     """Fetch and decompress a gzipped sitemap file."""
     logging.info(f"Fetching sitemap: {url}")
     response = requests.get(url, headers=HEADERS)
@@ -39,7 +39,7 @@ def fetch_sitemap(url):
     return ET.fromstring(data)
 
 
-def extract_urls_from_sitemap(root, robot_parser):
+def extract_urls_from_sitemap(root, robot_parser) -> list[str]:
     """Extract URLs from a sitemap XML root, filtering by robots.txt rules."""
     urls = []
     for url in root.findall("{http://www.sitemaps.org/schemas/sitemap/0.9}url"):
@@ -54,7 +54,7 @@ def extract_urls_from_sitemap(root, robot_parser):
     return urls
 
 
-def save_urls_to_file(urls, filename):
+def save_urls_to_file(urls, filename) -> None:
     """Save a list of URLs to a text file."""
     with open(filename, "w", encoding="utf-8") as f:
         for url in urls:
@@ -62,7 +62,7 @@ def save_urls_to_file(urls, filename):
     logging.info(f"Saved {len(urls)} URLs to {filename}")
 
 
-def collect_all_urls():
+def collect_all_urls() -> list[str]:
     """Collect all URLs from Minecraft Wiki sitemaps (run once per month)."""
     # Parse robots.txt
     rp = RobotFileParser()
@@ -85,19 +85,60 @@ def collect_all_urls():
         # Small delay between sitemap files to be polite
         time.sleep(0.1)
 
-    # Save all URLs to a file
-    save_urls_to_file(all_urls, "minecraft_urls.txt")
-
-    logging.info(f"Total URLs collected: {len(all_urls)}")
     return all_urls
 
 
-def fetch_page(url):
+def filter_urls(urls: list[str], blacklist: list[str]) -> list[str]:
+    """Filter out URLs that contains any of the specified keywords."""
+    filtered = []
+    for url in urls:
+        if any(keyword in url for keyword in blacklist):
+            logging.info(f"Filtered out URL: {url}")
+        else:
+            filtered.append(url)
+    logging.info(f"Filtered URLs count: {len(filtered)}")
+    return filtered
+
+
+def fetch_page(url) -> str:
     r = requests.get(url, headers=HEADERS, timeout=10)
     r.raise_for_status()
     return r.text
 
 
 if __name__ == "__main__":
-    url = "https://minecraft.wiki/w/Cobblestone"
-    html = fetch_page(url)
+    urls = collect_all_urls()
+    blacklist = [
+        "Bedrock_Edition",
+        "Bedrock_Editor",
+        "Calculators",
+        "Character_Creator",
+        "Education_Edition",
+        "LEGO_Minecraft",
+        "Launcher",
+        "Console",
+        "MinecraftEdu",
+        "Minecraft_",
+        "Nintendo",
+        "PlayStation",
+        "Pocket_Edition",
+        "Technical_blocks",
+        "Wii",
+        "Xbox",
+        "Talk:",
+        "Minecraft_Wiki:",
+        "MediaWiki:",
+        "Template:",
+        "Category",
+        "Module:",
+        "Dungeons:",
+        "Earth:",
+        "Story_Mode:",
+        "Legends:",
+        "Forum:",
+        "Tutorial:",
+        "Movie",
+        "talk:",
+    ]
+    filtered_urls = filter_urls(urls, blacklist)
+    save_urls_to_file(filtered_urls, "minecraft_urls.txt")
